@@ -7,15 +7,33 @@
 //
 
 import UIKit
+import SendBirdSDK
+import CoreLocation
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, CLLocationManagerDelegate {
 
     var window: UIWindow?
-
+    let locationManager = CLLocationManager()
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
+        
+        //let APP_ID: String = "58B2A58E-B5BB-4AD8-B6B9-3D7696701DF5"
+        //SendBird.initAppId(APP_ID)
+        
+        locationManager.delegate = self
+        locationManager.requestAlwaysAuthorization()
+        
+        if application.respondsToSelector(#selector(UIApplication.registerUserNotificationSettings(_:))) {
+            let settings:UIUserNotificationSettings = UIUserNotificationSettings(forTypes: [.Alert, .Sound, .Badge], categories: nil)
+            application.registerUserNotificationSettings(settings)
+            application.registerForRemoteNotifications()
+        }
+        else {
+            application.registerForRemoteNotificationTypes([.Alert, .Sound, .Badge])
+        }
+        
         return true
     }
 
@@ -41,6 +59,47 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
 
+    func handleRegionEvent(region: CLRegion!) {
+        // Show an alert if application is active
+        if UIApplication.sharedApplication().applicationState == .Active {
+            if let message = notefromRegionIdentifier(region.identifier) {
+                if let viewController = window?.rootViewController {
+                    showSimpleAlertWithTitle(nil, message: message, viewController: viewController)
+                }
+            }
+        } else {
+            // Otherwise present a local notification
+            var notification = UILocalNotification()
+            notification.alertBody = notefromRegionIdentifier(region.identifier)
+            notification.soundName = "Default";
+            UIApplication.sharedApplication().presentLocalNotificationNow(notification)
+        }
+    }
+    
+    func locationManager(manager: CLLocationManager, didEnterRegion region: CLRegion) {
+        if region is CLCircularRegion {
+            handleRegionEvent(region)
+        }
+    }
+    
+    func locationManager(manager: CLLocationManager, didExitRegion region: CLRegion) {
+        if region is CLCircularRegion {
+            handleRegionEvent(region)
+        }
+    }
+    
+    func notefromRegionIdentifier(identifier: String) -> String? {
+        if let savedItems = NSUserDefaults.standardUserDefaults().arrayForKey(kSavedItemsKey) {
+            for savedItem in savedItems {
+                if let geotification = NSKeyedUnarchiver.unarchiveObjectWithData(savedItem as! NSData) as? Geotification {
+                    if geotification.identifier == identifier {
+                        return geotification.note
+                    }
+                }
+            }
+        }
+        return nil
+    }
 
 }
 

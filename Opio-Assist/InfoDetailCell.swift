@@ -12,7 +12,8 @@ import AVFoundation
 
 class InfoDetailCell: UITableViewCell {
     
+    @IBOutlet weak var titleLabel: UILabel?
     
-    var cellLabel : String!
+    var cellLabel  = ""
     
 }

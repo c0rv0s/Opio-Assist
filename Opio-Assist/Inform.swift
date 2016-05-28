@@ -13,7 +13,9 @@ import AVFoundation
 class Inform: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource {
     
     @IBOutlet var colView: UICollectionView!
-    var collectionItems = ["Side Effects", "Medication", "Parenting", "Pets", "Household", "Relapse", "Time", "Doctors"]
+    var collectionItems = ["Side Effects", "Medication", "Parenting", "Family", "Relapse", "Doctors", "Relationships"]
+    
+    var selectedSet : Int!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,12 +36,15 @@ class Inform: UIViewController, UICollectionViewDelegate, UICollectionViewDataSo
     }
     
     func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+        selectedSet = indexPath.row
         self.performSegueWithIdentifier("InfoDetailSeg", sender: self)
     }
     
     override func prepareForSegue(segue: UIStoryboardSegue?, sender: AnyObject?) {
         if (segue!.identifier == "InfoDetailSeg") {
+            let viewController:InformationDetail = segue!.destinationViewController as! InformationDetail
             
+            viewController.set = collectionItems[selectedSet]
         }
     }
     
